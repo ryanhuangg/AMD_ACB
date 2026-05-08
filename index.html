@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AMD E*TRADE ACB Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">AMD stock from E*TRADE</p>
+        <h1>AMD ACB Calculator</h1>
+        <p class="lede">Track AMD ESPP purchases, RSU vests, and E*TRADE sales with Bank of Canada FX rates.</p>
+      </div>
+      <div class="header-actions">
+        <button class="secondary" id="sampleBtn" type="button">Load sample</button>
+        <button class="secondary" id="importBtn" type="button">Import JSON</button>
+        <button class="secondary" id="exportBtn" type="button">Export JSON</button>
+        <button class="danger" id="clearBtn" type="button">Clear</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="summary-strip" aria-label="ACB summary" id="summaryStrip"></section>
+
+      <section class="workspace chart-panel" aria-label="Account value chart">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Transaction-price estimate</p>
+            <h2>Account value</h2>
+          </div>
+          <p class="chart-note">CAD value of shares held after each AMD transaction.</p>
+        </div>
+        <div id="valueChart" class="chart-shell"></div>
+      </section>
+
+      <section class="entry-grid" aria-label="Transaction entry">
+        <form class="entry-panel accent-rsu" id="rsuForm">
+          <div class="panel-heading">
+            <span class="marker"></span>
+            <div>
+              <p class="eyebrow">RSU section</p>
+              <h2>Vest</h2>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>Date
+              <input required name="date" type="date">
+            </label>
+            <label>Symbol
+              <input required name="symbol" type="text" value="AMD" autocomplete="off">
+            </label>
+            <label>Currency
+              <select name="currency">
+                <option selected>USD</option>
+                <option>CAD</option>
+                <option>EUR</option>
+                <option>GBP</option>
+                <option>AUD</option>
+                <option>CHF</option>
+                <option>JPY</option>
+              </select>
+            </label>
+            <label>Shares vested
+              <input required name="shares" type="text" inputmode="decimal" placeholder="100">
+            </label>
+            <label>FMV / share
+              <input required name="fmv" type="text" inputmode="decimal" placeholder="50.00">
+            </label>
+            <div class="field-status wide" data-price-status="rsu">AMD close fills after date change.</div>
+            <label>Fees
+              <input name="fees" type="text" inputmode="decimal" placeholder="0.00">
+            </label>
+            <label>FX override
+              <input name="fxRate" type="text" inputmode="decimal" placeholder="Auto">
+            </label>
+            <label class="wide">Notes
+              <input name="notes" type="text" placeholder="Grant, vest ID, or memo">
+            </label>
+          </div>
+          <button class="primary" type="submit">Add RSU vest</button>
+        </form>
+
+        <form class="entry-panel accent-espp" id="esppForm">
+          <div class="panel-heading">
+            <span class="marker"></span>
+            <div>
+              <p class="eyebrow">ESPP section</p>
+              <h2>Purchase</h2>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>Date
+              <input required name="date" type="date">
+            </label>
+            <label>Symbol
+              <input required name="symbol" type="text" value="AMD" autocomplete="off">
+            </label>
+            <label>Currency
+              <select name="currency">
+                <option selected>USD</option>
+                <option>CAD</option>
+                <option>EUR</option>
+                <option>GBP</option>
+                <option>AUD</option>
+                <option>CHF</option>
+                <option>JPY</option>
+              </select>
+            </label>
+            <label>Shares bought
+              <input required name="shares" type="text" inputmode="decimal" placeholder="25">
+            </label>
+            <label>Employee price / share
+              <input required name="employeePrice" type="text" inputmode="decimal" placeholder="42.50">
+            </label>
+            <label>Purchase date FMV / share
+              <input required name="fmv" type="text" inputmode="decimal" placeholder="50.00">
+            </label>
+            <div class="field-status wide" data-price-status="espp">AMD close fills after date change.</div>
+            <label>Fees
+              <input name="fees" type="text" inputmode="decimal" placeholder="0.00">
+            </label>
+            <label>FX override
+              <input name="fxRate" type="text" inputmode="decimal" placeholder="Auto">
+            </label>
+            <label class="wide">Notes
+              <input name="notes" type="text" placeholder="Offering period, purchase ID, or memo">
+            </label>
+          </div>
+          <button class="primary" type="submit">Add ESPP purchase</button>
+        </form>
+
+        <form class="entry-panel accent-sale" id="saleForm">
+          <div class="panel-heading">
+            <span class="marker"></span>
+            <div>
+              <p class="eyebrow">Sale section</p>
+              <h2>Disposition</h2>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>Date
+              <input required name="date" type="date">
+            </label>
+            <label>Symbol
+              <input required name="symbol" type="text" value="AMD" autocomplete="off">
+            </label>
+            <label>Currency
+              <select name="currency">
+                <option selected>USD</option>
+                <option>CAD</option>
+                <option>EUR</option>
+                <option>GBP</option>
+                <option>AUD</option>
+                <option>CHF</option>
+                <option>JPY</option>
+              </select>
+            </label>
+            <label>Shares sold
+              <input required name="shares" type="text" inputmode="decimal" placeholder="40">
+            </label>
+            <label>Sale price / share
+              <input required name="salePrice" type="text" inputmode="decimal" placeholder="62.00">
+            </label>
+            <div class="field-status wide" data-price-status="sale">Manual entry required for mid-day sales.</div>
+            <label>Fees
+              <input name="fees" type="text" inputmode="decimal" placeholder="0.00">
+            </label>
+            <label>FX override
+              <input name="fxRate" type="text" inputmode="decimal" placeholder="Auto">
+            </label>
+            <label>E*TRADE lot label
+              <input name="lotLabel" type="text" placeholder="Optional">
+            </label>
+            <label class="wide">Notes
+              <input name="notes" type="text" placeholder="E*TRADE order ID, confirmation, or memo">
+            </label>
+          </div>
+          <button class="primary" type="submit">Add sale</button>
+        </form>
+      </section>
+
+      <section class="workspace">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Pooled by symbol</p>
+            <h2>ACB ledger</h2>
+          </div>
+          <div class="toolbar">
+            <label>Symbol
+              <select id="symbolFilter"></select>
+            </label>
+            <button class="secondary" id="refreshFxBtn" type="button">Refresh FX</button>
+          </div>
+        </div>
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Symbol</th>
+                <th>Source</th>
+                <th>Action</th>
+                <th class="num">Shares</th>
+                <th class="num">FX</th>
+                <th class="num">CAD amount</th>
+                <th class="num">ACB before</th>
+                <th class="num">ACB/share before</th>
+                <th class="num">ACB change</th>
+                <th class="num">Gain/loss</th>
+                <th class="num">Shares after</th>
+                <th class="num">ACB after</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Raw entries</p>
+            <h2>Transactions</h2>
+          </div>
+        </div>
+        <div class="table-shell compact">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Symbol</th>
+                <th>Kind</th>
+                <th class="num">Shares</th>
+                <th class="num">Price</th>
+                <th class="num">Fees</th>
+                <th class="num">FX</th>
+                <th>FX source</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="transactionBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="note-panel">
+        <strong>Tax note:</strong> calculations use a running average ACB pool for identical shares. ESPP taxable discount and RSU vest value are treated as already-taxed employment amounts that become part of ACB.
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
