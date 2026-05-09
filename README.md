@@ -21,5 +21,11 @@ Then visit `http://localhost:8080`.
 - When you change a transaction date, the app asks the local server for AMD's historical closing price and fills the relevant FMV or sale price field. If the market was closed, it uses the latest available close on or before that date.
 - FX rates are fetched from the Bank of Canada Valet API. For weekends and holidays, the app uses the latest available business-day rate on or before the transaction date.
 - Use the FX override field when you need a specific rate or a currency/date that is not available.
+- Export and import functions to allow saving current form to json for future modification
+
+For usage with ETrade, you mainly have to fill in these fields, the rest should be automatically populated:
+- RSU Vest: Date, Shares Vested
+- ESPP Purchase: Date, Shares bought, Employee price / Share
+- Disposition: Date, Shares sold, Sale price / share
 
 This is a planning and recordkeeping tool, not tax advice.
