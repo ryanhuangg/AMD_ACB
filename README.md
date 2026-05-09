@@ -22,6 +22,7 @@ Then visit `http://localhost:8080`.
 - FX rates are fetched from the Bank of Canada Valet API. For weekends and holidays, the app uses the latest available business-day rate on or before the transaction date.
 - Use the FX override field when you need a specific rate or a currency/date that is not available.
 - Export and import functions to allow saving current form to json for future modification
+- The table reflects ACB pool value, not total account value at market prices (because ETrade already has that)
 
 For usage with ETrade, you mainly have to fill in these fields, the rest should be automatically populated:
 - RSU Vest: Date, Shares Vested
