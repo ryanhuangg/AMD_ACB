@@ -10,6 +10,17 @@ const money = new Intl.NumberFormat("en-CA", {
   maximumFractionDigits: 2
 });
 
+const usdMoney = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+function formatUSD(amount) {
+  return usdMoney.format(amount).replace('$', 'US$');
+}
+
 const number = new Intl.NumberFormat("en-CA", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 6
@@ -408,6 +419,8 @@ function buildLedger(allTransactions) {
       beforeShares,
       beforeAcb,
       beforeAvg,
+      usdAmount: tx.action === "ACQUIRE" ? tx.shares * tx.fmv + tx.fees : tx.shares * tx.salePrice - tx.fees,
+      usdPerShare: tx.action === "ACQUIRE" ? tx.fmv : tx.salePrice,
       cadAmount,
       acbChange,
       gainLoss,
@@ -526,7 +539,7 @@ function renderValueChart(rows, filter) {
       <div><span>Latest shares held</span><strong>${formatQuantity(latest.shares)}</strong></div>
       <div><span>Peak value</span><strong>${money.format(peak.value)}</strong></div>
     </div>
-    <svg class="value-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Estimated CAD account value over time">
+    <svg class="value-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Total CAD ACB pool value over time">
       ${yTicks.map((tick) => {
         const y = yFor(tick);
         return `
@@ -547,7 +560,7 @@ function renderValueChart(rows, filter) {
       <line class="axis-line" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
       <line class="axis-line" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
     </svg>
-    <p class="chart-caption">Uses the RSU/ESPP FMV or sale price from each transaction as the valuation price. It does not fetch live AMD market prices.</p>
+    <p class="chart-caption">Shows the total CAD ACB pool value after each transaction, using the transaction valuation price and not live AMD market prices.</p>
   `;
 }
 
@@ -556,7 +569,7 @@ function buildValueChartPoints(rows, filter) {
   return rows
     .filter((row) => row.status === "ok")
     .map((row) => {
-      valuesBySymbol.set(row.tx.symbol, row.marketValueAfter);
+      valuesBySymbol.set(row.tx.symbol, row.afterAcb);
       return {
         date: row.tx.date,
         kind: row.tx.kind,
@@ -564,7 +577,7 @@ function buildValueChartPoints(rows, filter) {
         shares: row.afterShares,
         value: filter === "ALL"
           ? [...valuesBySymbol.values()].reduce((sum, value) => sum + value, 0)
-          : row.marketValueAfter
+          : row.afterAcb
       };
     });
 }
@@ -591,7 +604,7 @@ function formatCompactMoney(value) {
 
 function renderLedger(rows) {
   if (!rows.length) {
-    elements.ledgerBody.innerHTML = `<tr><td class="empty" colspan="14">No ledger rows for this filter.</td></tr>`;
+    elements.ledgerBody.innerHTML = `<tr><td class="empty" colspan="17">No ledger rows for this filter.</td></tr>`;
     return;
   }
 
@@ -609,13 +622,16 @@ function renderLedger(rows) {
         <td>${tx.action === "SELL" ? "Sell" : "Acquire"}${status}</td>
         <td class="num">${formatQuantity(tx.shares)}</td>
         <td class="num">${formatFx(tx)}</td>
+        <td class="num">${formatUSD(row.usdAmount)}</td>
         <td class="num">${money.format(row.cadAmount)}</td>
+        <td class="num">${formatUSD(row.usdPerShare)}</td>
         <td class="num">${money.format(row.beforeAcb)}</td>
         <td class="num">${money.format(row.beforeAvg)}</td>
         <td class="num">${money.format(row.acbChange)}</td>
         <td class="num ${gainClass}">${gain}</td>
         <td class="num">${formatQuantity(row.afterShares)}</td>
         <td class="num">${money.format(row.afterAcb)}</td>
+        <td class="num">${row.afterShares > 0 ? money.format(row.afterAcb / row.afterShares) : ''}</td>
         <td></td>
       </tr>
     `;
@@ -671,7 +687,7 @@ function syncSymbolDefaults(symbol, currency) {
 function formatFx(tx) {
   if (!Number.isFinite(tx.fxRate)) return "";
   const suffix = tx.fxDate && tx.fxDate !== tx.date ? ` (${tx.fxDate})` : "";
-  return `${tx.fxRate.toFixed(6)}${suffix}`;
+  return `${tx.fxRate.toFixed(4)}${suffix}`;
 }
 
 function formatQuantity(value) {
