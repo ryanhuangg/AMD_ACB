@@ -430,7 +430,8 @@ button:focus-visible {
 }
 
 .table-shell {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: #ffffff;
@@ -455,15 +456,26 @@ td {
   font-size: 13px;
 }
 
-th {
+.table-shell thead {
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+.table-shell thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   color: var(--muted);
   background: #f6f8f6;
+  background-clip: padding-box;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0;
+}
+
+.highlight-col {
+  font-weight: 700;
 }
 
 tbody tr:last-child td {

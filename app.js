@@ -41,6 +41,7 @@ const elements = {
   valueChart: document.getElementById("valueChart"),
   symbolFilter: document.getElementById("symbolFilter"),
   refreshFxBtn: document.getElementById("refreshFxBtn"),
+  saveCsvBtn: document.getElementById("saveCsvBtn"),
   sampleBtn: document.getElementById("sampleBtn"),
   importBtn: document.getElementById("importBtn"),
   importFile: document.getElementById("importFile"),
@@ -60,6 +61,7 @@ async function init() {
   elements.esppForm.addEventListener("submit", handleEsppSubmit);
   elements.saleForm.addEventListener("submit", handleSaleSubmit);
   elements.refreshFxBtn.addEventListener("click", refreshAllFx);
+  elements.saveCsvBtn.addEventListener("click", exportLedgerCsv);
   elements.symbolFilter.addEventListener("change", render);
   elements.sampleBtn.addEventListener("click", loadSampleData);
   elements.importBtn.addEventListener("click", () => elements.importFile.click());
@@ -631,7 +633,7 @@ function renderLedger(rows) {
         <td class="num ${gainClass}">${gain}</td>
         <td class="num">${formatQuantity(row.afterShares)}</td>
         <td class="num">${money.format(row.afterAcb)}</td>
-        <td class="num">${row.afterShares > 0 ? money.format(row.afterAcb / row.afterShares) : ''}</td>
+        <td class="num highlight-col">${row.afterShares > 0 ? money.format(row.afterAcb / row.afterShares) : ''}</td>
         <td></td>
       </tr>
     `;
@@ -845,6 +847,76 @@ function exportJson() {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function exportLedgerCsv() {
+  const filter = elements.symbolFilter.value || "ALL";
+  const ledger = buildLedger(transactions);
+  const rows = filter === "ALL" ? ledger.rows : ledger.rows.filter((row) => row.tx.symbol === filter);
+  if (!rows.length) {
+    showToast("No ledger rows to export.");
+    return;
+  }
+
+  const headers = [
+    "Date",
+    "Symbol",
+    "Source",
+    "Action",
+    "Shares",
+    "FX",
+    "USD amount",
+    "CAD amount",
+    "$US per share",
+    "Total ACB Pool before",
+    "ACB/share before",
+    "ACB Pool change",
+    "Gain/loss",
+    "Shares after",
+    "Total ACB Pool after",
+    "ACB/share after"
+  ];
+
+  const csvRows = rows.map((row) => {
+    const tx = row.tx;
+    const source = tx.kind;
+    const action = tx.action === "SELL" ? "Sell" : "Acquire";
+    const gain = row.gainLoss === null ? "" : money.format(row.gainLoss);
+    return [
+      tx.date,
+      tx.symbol,
+      source,
+      action,
+      formatQuantity(tx.shares),
+      formatFx(tx),
+      formatUSD(row.usdAmount),
+      money.format(row.cadAmount),
+      formatUSD(row.usdPerShare),
+      money.format(row.beforeAcb),
+      money.format(row.beforeAvg),
+      money.format(row.acbChange),
+      gain,
+      formatQuantity(row.afterShares),
+      money.format(row.afterAcb),
+      row.afterShares > 0 ? money.format(row.afterAcb / row.afterShares) : ""
+    ].map(csvEscapeCell).join(",");
+  });
+
+  const csvContent = `\uFEFF${headers.map(csvEscapeCell).join(",")}\n${csvRows.join("\n")}`;
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `acb-ledger-${formatLocalDate(new Date())}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvEscapeCell(value) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
 }
 
 function importJson(event) {
