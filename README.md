@@ -2,6 +2,25 @@
 
 A local browser tool for tracking Canadian adjusted cost base for AMD ESPP purchases, RSU vests, and E*TRADE share sales.
 
+## Prerequisites
+
+- A modern web browser such as Edge, Chrome, Firefox, or Safari.
+- Node.js only if you want to run the local server and use the app's built-in price lookup.
+
+### Installing Node.js on Windows
+
+1. Open your browser and go to: https://nodejs.org/
+2. Download the **LTS** Windows installer.
+3. Run the installer and accept the default settings.
+4. Open PowerShell and verify installation:
+
+```powershell
+node --version
+npm --version
+```
+
+You should see version numbers for both commands.
+
 ## Run
 
 Open `index.html` directly, or serve the folder locally:
@@ -24,7 +43,7 @@ Then visit `http://localhost:8080`.
 - Export and import functions to allow saving current form to json for future modification
 - The table reflects ACB pool value, not total account value at market prices (because ETrade already has that)
 
-For usage with ETrade, you mainly have to fill in these fields, the rest should be automatically populated:
+For usage with E*TRADE, you mainly have to fill in these fields, the rest should be automatically populated:
 - RSU Vest: Date, Shares Vested
 - ESPP Purchase: Date, Shares bought, Employee price / Share
 - Disposition: Date, Shares sold, Sale price / share
